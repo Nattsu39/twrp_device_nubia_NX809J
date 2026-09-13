@@ -1,0 +1,30 @@
+# TWRP recovery properties for Nubia NX809J
+# 依据真机 /vendor/etc/init/*.rc 的 trigger 反推, 不是照抄参考树
+
+# ADB: recovery 里不做调试授权 (正常系统里是 ro.adb.secure=1)
+ro.adb.secure=0
+
+# 动态分区  [NX809J 实测] ro.boot.dynamic_partitions = true
+ro.boot.dynamic_partitions=true
+
+# USB
+vendor.usb.configfs=1
+vendor.usb.rps_mask=0
+vendor.usb.uvc.function.init=1
+service.adb.tcp.port=5555
+
+# 充电
+ro.charger.enable_suspend=1
+
+# ---------------------------------------------------------------------------
+# Gatekeeper / SPU   ★必需★
+#   真机 /vendor/etc/init/android.hardware.gatekeeper-service-qti.rc:
+#       service vendor.gatekeeper_default /vendor/bin/hw/android.hardware.gatekeeper-rust-service-qti
+#           class early_hal
+#           disabled                       <-- 默认不启动!
+#       on property:vendor.gatekeeper.is_security_level_spu=0
+#           enable vendor.gatekeeper_default     <-- 靠这个 prop 才被 enable
+#   => 不设这个 prop, gatekeeper 不会起来, FBE 解密会失败。
+# ---------------------------------------------------------------------------
+vendor.gatekeeper.is_security_level_spu=0
+vendor.gatekeeper.disable_spu=true

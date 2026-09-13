@@ -1,0 +1,51 @@
+# TWRP recovery.fstab for Nubia NX809J (RedMagic 11 Pro)
+# 平台: Qualcomm canoe / SM8850, Android 16
+# 依据真机 /vendor/etc/fstab.qcom 适配
+# 与参考树 (xiaomi thales) 的差异: 已移除 mi_ext / rescue(->cache) 等 Xiaomi 专有项
+
+#<src>                                                          <mnt_point>            <type>  <mnt_flags and options>                <fs_mgr_flags>
+system                                                           /system                erofs   ro                                     wait,slotselect,avb=vbmeta_system,logical,first_stage_mount
+system                                                           /system                ext4    ro,barrier=1,discard                   wait,slotselect,avb=vbmeta_system,logical,first_stage_mount
+system_ext                                                       /system_ext            erofs   ro                                     wait,slotselect,avb=vbmeta_system,logical,first_stage_mount
+system_ext                                                       /system_ext            ext4    ro,barrier=1,discard                   wait,slotselect,avb=vbmeta_system,logical,first_stage_mount
+product                                                          /product               erofs   ro                                     wait,slotselect,avb=vbmeta_system,logical,first_stage_mount
+product                                                          /product               ext4    ro,barrier=1,discard                   wait,slotselect,avb=vbmeta_system,logical,first_stage_mount
+vendor                                                           /vendor                erofs   ro                                     wait,slotselect,avb=vbmeta,logical,first_stage_mount
+vendor                                                           /vendor                ext4    ro,barrier=1,discard                   wait,slotselect,avb=vbmeta,logical,first_stage_mount
+vendor_dlkm                                                      /vendor_dlkm           erofs   ro                                     wait,slotselect,avb=vbmeta,logical,first_stage_mount
+vendor_dlkm                                                      /vendor_dlkm           ext4    ro,barrier=1,discard                   wait,slotselect,avb=vbmeta,logical,first_stage_mount
+system_dlkm                                                      /system_dlkm           erofs   ro                                     wait,slotselect,avb=vbmeta,logical,first_stage_mount
+system_dlkm                                                      /system_dlkm           ext4    ro,barrier=1,discard                   wait,slotselect,avb=vbmeta,logical,first_stage_mount
+odm                                                              /odm                   erofs   ro                                     wait,slotselect,avb=vbmeta,logical,first_stage_mount
+odm                                                              /odm                   ext4    ro,barrier=1,discard                   wait,slotselect,avb=vbmeta,logical,first_stage_mount
+
+# --- 物理分区 ---
+/dev/block/bootdevice/by-name/boot                                /boot                  emmc    defaults                               slotselect
+/dev/block/bootdevice/by-name/init_boot                           /init_boot             emmc    defaults                               slotselect
+/dev/block/bootdevice/by-name/vendor_boot                         /vendor_boot           emmc    defaults                               slotselect
+/dev/block/bootdevice/by-name/dtbo                                /dtbo                  emmc    defaults                               slotselect
+/dev/block/bootdevice/by-name/recovery                            /recovery              emmc    defaults                               slotselect
+/dev/block/bootdevice/by-name/vbmeta                              /vbmeta                emmc    defaults                               slotselect
+/dev/block/bootdevice/by-name/vbmeta_system                       /vbmeta_system         emmc    defaults                               slotselect
+
+# --- 数据与元数据 ---
+/dev/block/bootdevice/by-name/metadata                            /metadata              f2fs    noatime,nosuid,nodev,discard           wait,formattable,first_stage_mount
+/dev/block/bootdevice/by-name/userdata                            /data                  f2fs    noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065,fsync_mode=nobarrier,inlinecrypt,gc_merge latemount,wait,formattable,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized+wrappedkey_v0,keydirectory=/metadata/vold/metadata_encryption,metadata_encryption=aes-256-xts:wrappedkey_v0,quota,reservedsize=128M,sysfs_path=/sys/devices/platform/soc/1d84000.ufshc,checkpoint=fs
+/dev/block/bootdevice/by-name/misc                                /misc                  emmc    defaults                               defaults
+/dev/block/bootdevice/by-name/persist                             /persist               ext4    noatime,nosuid,nodev,barrier=1         wait
+/dev/block/bootdevice/by-name/logdump                             /logdump               ext4    noatime,nosuid,nodev,barrier=1,discard wait,formattable
+
+# --- 固件/厂商附加分区 (NX809J 特有) ---
+/dev/block/bootdevice/by-name/modem                               /vendor/firmware_mnt   vfat    ro,shortname=lower,uid=1000,gid=1000,dmask=227,fmask=337,context=u:object_r:firmware_file:s0 wait,slotselect
+/dev/block/bootdevice/by-name/dsp                                 /vendor/dsp            ext4    ro,nosuid,nodev,barrier=1              wait,slotselect
+/dev/block/bootdevice/by-name/bluetooth                           /vendor/bt_firmware    vfat    ro,shortname=lower,uid=1002,gid=3002,dmask=227,fmask=337,context=u:object_r:bt_firmware_file:s0 wait,slotselect
+/dev/block/bootdevice/by-name/vm-bootsys                          /vendor/vm-system      ext4    ro,nosuid,nodev,barrier=1              wait,slotselect
+/dev/block/bootdevice/by-name/vm-persist                          /mnt/vendor/vm-persist ext4    noatime,nosuid,nodev,barrier=1         wait
+/dev/block/bootdevice/by-name/qmcs                                /mnt/vendor/qmcs       vfat    noatime,nosuid,nodev,context=u:object_r:vendor_qmcs_file:s0 wait,check,formattable
+/dev/block/bootdevice/by-name/spunvm                              /mnt/vendor/spunvm     vfat    noatime,nosuid,nodev,context=u:object_r:vendor_spunvm_file:s0 wait,check,formattable
+/dev/block/bootdevice/by-name/soccp                               /vendor/soccp_firmware vfat    ro,shortname=lower,uid=0,gid=1000,dmask=227,fmask=337,context=u:object_r:vendor_soccp_file:s0 wait,slotselect
+
+# --- 外置存储 ---
+/dev/block/bootdevice/by-name/sdcard                             /external_sd           auto    defaults                               voldmanaged=external_sd:auto
+/devices/platform/soc/8804000.sdhci/mmc_host*                    /storage/sdcard1       vfat    nosuid,nodev                           wait,voldmanaged=sdcard1:auto,encryptable=footer
+/devices/platform/soc/*.ssusb/*.dwc3/xhci-hcd.*.auto*            /storage/usbotg        vfat    nosuid,nodev                           wait,voldmanaged=usbotg:auto
