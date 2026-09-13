@@ -121,6 +121,56 @@ jobs:
         cat INFO.txt
       working-directory: device/${{ github.event.inputs.DEVICE_PATH }}
 
+    # ── TWRP 触摸坐标缩放修复 ─────────────────────────────────────────────
+    # TWRP 的 vk_tp_to_screen() 用驱动"声明"的 ABS 量程来缩放触摸坐标:
+    #
+    #     *x = (p->x - p->xi.minimum) * (fb_width - 1) / (p->xi.maximum - p->xi.minimum);
+    #
+    # NX809J 的 synaptics_tcm 驱动在 recovery 环境下声明 ABS_MT_POSITION_X 的
+    # max=12159 / Y 的 max=26879, 也就是面板分辨率(1216x2688)的 10 倍; 但它
+    # 实际上报的值只有面板像素单位 0..1215 / 0..2679 (在正常 Android 启动时
+    # 上报的是 0..12159 的 IC 单位, 两边行为不同, 原因在 vendor 侧)。
+    #
+    # 结果: 屏幕上的每一次触摸都被除以 10, 全部挤到左上角约 122x262 像素的
+    # 区域里, 界面看起来完全点不动 —— 但 evdev 层数据是正常流动的。
+    #
+    # 修复: 缩放前把明显不合理的量程夹到 framebuffer 尺寸。
+    # 正常设备的 ABS 量程不会超过 fb 大小, 所以这段对其他机型无副作用。
+    - name: Patch TWRP touch scaling
+      run: |
+        python3 - <<'PYEOF'
+        import pathlib, sys
+        p = pathlib.Path("bootable/recovery/twrpminui/events.cpp")
+        s = p.read_text()
+        if "NX809J touch range fix" in s:
+            print("already patched, skipping")
+            sys.exit(0)
+        anchor = "    *x = (p->x - p->xi.minimum) * (fb_width - 1) / (p->xi.maximum - p->xi.minimum);"
+        if anchor not in s:
+            print("ERROR: anchor line not found in vk_tp_to_screen()")
+            sys.exit(1)
+        fix = (
+            "    /* NX809J touch range fix: the synaptics_tcm driver advertises an ABS\n"
+            "     * range 10x larger than the values it actually reports in recovery\n"
+            "     * (max 12159/26879 but reported values are panel pixels 0..1215/0..2679),\n"
+            "     * which scales every touch into the top-left corner.  Clamp an\n"
+            "     * implausible range down to the framebuffer size. */\n"
+            "    if (p->xi.maximum - p->xi.minimum > fb_width) {\n"
+            "        p->xi.minimum = 0;\n"
+            "        p->xi.maximum = fb_width - 1;\n"
+            "    }\n"
+            "    if (p->yi.maximum - p->yi.minimum > fb_height) {\n"
+            "        p->yi.minimum = 0;\n"
+            "        p->yi.maximum = fb_height - 1;\n"
+            "    }\n"
+        )
+        s = s.replace(anchor, fix + anchor, 1)
+        p.write_text(s)
+        print("patched " + str(p))
+        PYEOF
+        echo "--- 结果 ---"
+        grep -n -B1 -A12 "NX809J touch range fix" bootable/recovery/twrpminui/events.cpp
+
     - name: Build TWRP
       run: |
         source build/envsetup.sh

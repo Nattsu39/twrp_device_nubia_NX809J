@@ -151,9 +151,18 @@ TW_EXCLUDE_APEX := true
 TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
 
 # 亮度   [NX809J 实测] /sys/class/backlight/panel0-backlight
+#   ⚠️ max_brightness 实测为 8190 (之前误写 2047)。原值会让 TWRP 以为量程只有
+#   硬件的 1/4, 而 TW_DEFAULT_BRIGHTNESS=250 在 8190 下实际只有 3% 亮度,
+#   屏幕几乎全黑 —— 表现和"死机/触屏没反应"完全一样。
 TW_BRIGHTNESS_PATH := "/sys/class/backlight/panel0-backlight/brightness"
-TW_MAX_BRIGHTNESS := 2047
-TW_DEFAULT_BRIGHTNESS := 250
+TW_MAX_BRIGHTNESS := 8190
+TW_DEFAULT_BRIGHTNESS := 4095
+
+# 屏幕超时  默认 60 秒后 blanktimer 会把亮度写 0 再 gr_fb_blank(true) 关掉 DRM
+#   帧缓冲。而 gui.cpp:311 的唤醒判断是 `if (!blankTimer.isScreenOff())` ——
+#   屏幕已经熄掉时, 触摸事件不会再触发 resetTimerAndUnblank(), 只有上滑解锁
+#   手势或电源键能唤醒。对着一块全黑的屏幕调试 TWRP 太痛苦, 直接关掉。
+TW_NO_SCREEN_TIMEOUT := true
 
 # 输入设备黑名单  [NX809J 实测] 无 hbtp_vm 设备; 触摸是 synaptics_tcm_touch
 TW_INPUT_BLACKLIST := ""
