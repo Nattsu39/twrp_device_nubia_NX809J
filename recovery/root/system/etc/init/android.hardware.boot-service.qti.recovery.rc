@@ -1,0 +1,45 @@
+# Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+# SPDX-License-Identifier: BSD-3-Clause-Clear
+#
+# NX809J/TWRP 修复: recovery 卡在 "Processing /etc/recovery.fstab"
+# ---------------------------------------------------------------------------
+# recovery 的 init.rc 只 import 这几个文件 (实测 /system/etc/init/hw/init.rc):
+#
+#     import /init.recovery.logd.rc
+#     import /init.recovery.ldconfig.rc
+#     import /init.recovery.mksh.rc
+#     import /init.recovery.usb.rc
+#     import /init.recovery.${ro.hardware}.rc
+#
+# 也就是说 /vendor/etc/init/*.rc 在 recovery 模式下 **根本不会被解析**。
+# 我们把 QTI boot HAL 的 rc 放在 recovery/root/vendor/etc/init/ 里, 等于白放:
+# /vendor/bin/hw/android.hardware.boot-service.qti 这个二进制虽然打进了 ramdisk,
+# 却没有任何 init 脚本去启动它, servicemanager 里也就永远没有
+# android.hardware.boot.IBootControl/default。
+#
+# 后果: TWRP 处理 fstab 时调用 BootControlClient::WaitForService() 取当前槽位,
+# 它会一直死等这个 AIDL 服务, 主线程阻塞在 futex_wait_queue 上, 画面停在
+# TWRP splash 不动。dmesg 里表现为每秒刷一次的:
+#
+#     servicemanager: Caller(pid=<TWRP>, ...) Since
+#       'android.hardware.boot.IBootControl/default' could not be found trying
+#       to start it as a lazy AIDL service
+#
+# 解决办法就是照抄原厂 recovery 的做法 —— 原厂把 boot HAL 的 rc 放在
+# /system/etc/init/ (这个目录 recovery init 会解析), 文件名叫
+# android.hardware.boot-service.qti.recovery.rc。
+#
+# `interface aidl ...` 这行是真正起作用的部分: servicemanager 收到客户端请求时
+# 会通过 ctl.interface_start 让 init 去找声明了该接口的服务并拉起它, 所以即使
+# class early_hal 没被 class_start, 服务也会按需启动。
+#
+# seclabel 用 u:r:recovery:s0 而不是原厂的 u:r:hal_bootctl_default:s0, 因为
+# TWRP 侧 sepolicy 里没有后者, 用与 TWRP 自身相同的域可以完全避开 avc denial
+# (已实测手动以该域运行该二进制可正常工作)。
+
+service vendor.boot-qti /vendor/bin/hw/android.hardware.boot-service.qti
+    class early_hal
+    user root
+    group root
+    seclabel u:r:recovery:s0
+    interface aidl android.hardware.boot.IBootControl/default
