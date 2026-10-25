@@ -52,23 +52,28 @@ class RecoveryConfigurationTest(unittest.TestCase):
 
     def test_boot_entries_do_not_use_broken_flags_overlay(self):
         # The shipped LoadTwrpFlags incorrectly takes tokens[1] (filesystem)
-        # as the block device when overriding v2 fstab rows. Direct v1 rows
-        # use token 2 correctly and avoid that overlay altogether.
+        # as the block device. Inline v2 flags avoid that override and remain
+        # compatible with the boot HAL, which also reads this same fstab.
         flags = (ROOT / "recovery/root/system/etc/twrp.flags").read_text(encoding="utf-8")
         self.assertFalse(any(line.startswith("/") for line in flags.splitlines()))
         lines = (ROOT / "recovery.fstab").read_text(encoding="utf-8").splitlines()
-        rows = {shlex.split(line)[0]: shlex.split(line) for line in lines if line.startswith("/")}
+        rows = {shlex.split(line)[1]: shlex.split(line) for line in lines if line.startswith("/")}
         for name in ("boot", "init_boot", "vendor_boot", "dtbo", "recovery", "vbmeta", "vbmeta_system"):
             row = rows["/" + name]
-            self.assertEqual(row[1], "emmc")
-            self.assertEqual(row[2], "/dev/block/bootdevice/by-name/" + name)
-            self.assertIn("slotselect", row[3])
-            self.assertIn("backup=1", row[3])
+            self.assertEqual(row[2], "emmc")
+            self.assertEqual(row[0], "/dev/block/bootdevice/by-name/" + name)
+            self.assertIn("slotselect", row[4])
+            self.assertIn("backup=1", row[4])
+
+    def test_all_rows_are_compatible_with_boot_hal_fstab_reader(self):
+        for line in (ROOT / "recovery.fstab").read_text(encoding="utf-8").splitlines():
+            if line.strip() and not line.startswith("#"):
+                self.assertEqual(len(line.split()), 5, line)
 
     def test_vm_persist_is_raw_backup_not_ext4_mount(self):
         fstab = (ROOT / "recovery.fstab").read_text(encoding="utf-8")
         self.assertNotIn("/mnt/vendor/vm-persist", fstab)
-        self.assertIn("/vm_persist_image emmc ", fstab)
+        self.assertIn(" /vm_persist_image emmc ", fstab)
 
     def test_crypto_services_have_explicit_recovery_domain(self):
         for name in ("qseecomd", "android.hardware.security.onekeymint-service-qti",

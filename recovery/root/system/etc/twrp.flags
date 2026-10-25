@@ -1,3 +1,3 @@
-# Intentionally empty. The shipped TWRP flags overlay parser misassigns
-# filesystem tokens as block devices. Define device entries and flags directly
-# in recovery.fstab using its supported per-line TWRP v1 syntax.
+# Intentionally empty: the shipped overlay parser treats filesystem names as
+# block devices. Use inline flags in the Android v2 recovery.fstab instead.
+# Keep five fields per row because the boot control HAL also reads this file.
