@@ -1,0 +1,75 @@
+"""Regression checks for the observed NX809J recovery failures."""
+
+import json
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def storage_patterns(fstab):
+    return [line.split()[0] for line in fstab.splitlines()
+            if line.strip() and not line.startswith("#") and "voldmanaged=" in line]
+
+
+def twrp_matches(pattern, device):
+    # Handle_Uevent in the shipped TWRP compares only this prefix.
+    return device.startswith(pattern.split("*", 1)[0])
+
+
+class RecoveryConfigurationTest(unittest.TestCase):
+    def test_internal_ufs_never_matches_removable_storage(self):
+        patterns = storage_patterns((ROOT / "recovery.fstab").read_text(encoding="utf-8"))
+        for index, disk in enumerate("abcdef"):
+            path = ("/devices/platform/soc/1d84000.ufshc/host0/"
+                    f"target0:0:0/0:0:0:{index}/block/sd{disk}")
+            for pattern in patterns:
+                self.assertFalse(twrp_matches(pattern, path), (pattern, path))
+                self.assertFalse(twrp_matches(pattern, path + f"/sd{disk}15"))
+
+    def test_usb_controller_is_still_supported(self):
+        # Representative USB storage child of the controller observed on device.
+        path = ("/devices/platform/soc/a600000.ssusb/a600000.dwc3/"
+                "xhci-hcd.0.auto/usb1/1-1/1-1:1.0/host1/target1:0:0/"
+                "1:0:0:0/block/sdg")
+        patterns = storage_patterns((ROOT / "recovery.fstab").read_text(encoding="utf-8"))
+        self.assertTrue(any(twrp_matches(pattern, path) for pattern in patterns))
+
+    def test_old_pattern_reproduces_internal_disk_bug(self):
+        self.assertTrue(twrp_matches(
+            "/devices/platform/soc/*.ssusb/*.dwc3/xhci-hcd.*.auto*",
+            "/devices/platform/soc/1d84000.ufshc/host0/block/sda"))
+
+    def test_missing_reference_partitions_are_removed(self):
+        flags = (ROOT / "recovery/root/system/etc/twrp.flags").read_text(encoding="utf-8")
+        for name in ("/mi_ext", "/cache", "/modemfirmware", "/rescue"):
+            self.assertNotIn(name, flags)
+        for line in flags.splitlines():
+            if line.startswith(("/modem_image ", "/bluetooth_image ", "/dsp_image ")):
+                self.assertIn("slotselect", line)
+
+    def test_crypto_services_have_explicit_recovery_domain(self):
+        for name in ("qseecomd", "android.hardware.security.onekeymint-service-qti",
+                     "android.hardware.gatekeeper-service-qti"):
+            rc = (ROOT / f"recovery/root/vendor/etc/init/{name}.rc").read_text(encoding="utf-8")
+            self.assertIn("seclabel u:r:recovery:s0", rc)
+
+    def test_vendor_property_set_leaves_room_for_runtime_properties(self):
+        data = (ROOT / "recovery/root/vendor/build.prop").read_bytes()
+        # The original 44,958-byte file added 678 vendor properties into the
+        # single 128 KiB vendor_default_prop area and exhausted its allocator.
+        self.assertLess(len(data), 4096)
+        self.assertLess(len(data.splitlines()), 50)
+        self.assertNotIn(b"metadata_init_delete_all_keys.enabled=true", data)
+
+    def test_overlay_contains_all_declared_inputs(self):
+        config = json.loads((ROOT / "ramdisk-overlay.json").read_text(encoding="utf-8"))
+        for target, source in config["files"].items():
+            self.assertTrue((ROOT / source).is_file(), target)
+        self.assertIn("system/bin/init.nx809j-touch.sh", config["files"])
+        self.assertEqual(config["properties"]["ro.build.version.security_patch"], "2026-09-01")
+
+
+if __name__ == "__main__":
+    unittest.main()

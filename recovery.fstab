@@ -46,6 +46,6 @@ odm                                                              /odm           
 /dev/block/bootdevice/by-name/soccp                               /vendor/soccp_firmware vfat    ro,shortname=lower,uid=0,gid=1000,dmask=227,fmask=337,context=u:object_r:vendor_soccp_file:s0 wait,slotselect
 
 # --- 外置存储 ---
-/dev/block/bootdevice/by-name/sdcard                             /external_sd           auto    defaults                               voldmanaged=external_sd:auto
-/devices/platform/soc/8804000.sdhci/mmc_host*                    /storage/sdcard1       vfat    nosuid,nodev                           wait,voldmanaged=sdcard1:auto,encryptable=footer
-/devices/platform/soc/*.ssusb/*.dwc3/xhci-hcd.*.auto*            /storage/usbotg        vfat    nosuid,nodev                           wait,voldmanaged=usbotg:auto
+# TWRP matches only the prefix before the first '*'. Keep the USB controller
+# in that prefix so internal UFS disks can never become removable storage.
+/devices/platform/soc/a600000.ssusb/*                           /storage/usbotg        vfat    nosuid,nodev                           wait,voldmanaged=usbotg:auto

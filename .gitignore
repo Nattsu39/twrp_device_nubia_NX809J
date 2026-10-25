@@ -1,2 +1,6 @@
 *.log
 out/
+
+firmware-inputs/
+__pycache__/
+out/

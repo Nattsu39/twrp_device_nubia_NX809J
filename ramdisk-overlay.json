@@ -1,0 +1,43 @@
+{
+  "files": {
+    "system/etc/recovery.fstab": "recovery.fstab",
+    "init.recovery.qcom.rc": "recovery/root/init.recovery.qcom.rc",
+    "system/etc/twrp.flags": "recovery/root/system/etc/twrp.flags",
+    "vendor/build.prop": "recovery/root/vendor/build.prop",
+    "vendor/etc/init/android.hardware.gatekeeper-service-qti.rc": "recovery/root/vendor/etc/init/android.hardware.gatekeeper-service-qti.rc",
+    "vendor/etc/init/android.hardware.security.onekeymint-service-qti.rc": "recovery/root/vendor/etc/init/android.hardware.security.onekeymint-service-qti.rc",
+    "vendor/etc/init/qseecomd.rc": "recovery/root/vendor/etc/init/qseecomd.rc",
+    "system/bin/init.nx809j-touch.sh": "recovery/root/system/bin/init.nx809j-touch.sh",
+    "system/etc/init/keystore2.rc": "recovery/root/system/etc/init/keystore2.rc"
+  },
+  "properties": {
+    "ro.build.version.release": "16",
+    "ro.build.version.release_or_codename": "16",
+    "ro.system.build.version.release": "16",
+    "ro.system.build.version.release_or_codename": "16",
+    "ro.odm.build.version.release": "16",
+    "ro.odm.build.version.release_or_codename": "16",
+    "ro.product.build.version.release": "16",
+    "ro.product.build.version.release_or_codename": "16",
+    "ro.system_ext.build.version.release": "16",
+    "ro.system_ext.build.version.release_or_codename": "16",
+    "ro.build.version.security_patch": "2026-09-01",
+    "ro.vendor.build.security_patch": "2026-03-01"
+  },
+  "firmware_files": {
+    "vendor/bin/hw/android.hardware.security.onekeymint-service-qti": "4cfe70077ce03b7c3e0f1ea6fa59ee846e75f5b0a588a916eeda7e38f261e0f3",
+    "vendor/etc/gpfspath_oem_config.xml": "f33b193963bbbee24df9de611384139959aa3080f956b6e908abab4cee616f07",
+    "vendor/lib64/libGPreqcancel.so": "389bb55cde8cb2fefda98e8281b74c8485e3069b05c624e7f4672880ed66815a",
+    "vendor/lib64/libGPreqcancel_svc.so": "287dbfa2cb1b72ea2f225d1823f1109d905ace90a5cb7f4ffdcd5eae16bd933a",
+    "vendor/lib64/libdrm.so": "edd7a8ba5e6090fd4c9ca7ce39ae59a05cc5bf85d496b3fe20ef9c75284d945e",
+    "vendor/lib64/libdrmtime.so": "aeb0e876ae3c09675a868937640acec843faef4d198549f96fb9729f551d9a42",
+    "vendor/lib64/libgpt.so": "bbab33b69b0634bf34bd695fad10c3667d63cd340353c6125e91d1afb5fcf91c",
+    "vendor/lib64/libops.so": "c36430e5f74c0b0b8e5877f5f5342b4d5ad9fede3ea6ad97e69ddbb0c3e6c5c5",
+    "vendor/lib64/libqisl.so": "2ba09abbbc254daa6cf9e3a43831405d28d94b081f11bed9e70d9e041ee93d7b",
+    "vendor/lib64/librpmb.so": "e16a1368617f2e8b14596fb0be7677b8e8df90843256938844b21dcfbc09065c",
+    "vendor/lib64/libspl.so": "91b39c1df29ad9d936ff1340b03efcefc35e089703e4250bc0fbf785c55dd19e",
+    "vendor/lib64/libssd.so": "a9437686fb8c0e387de9498df2be77d3c3c21f5aba18ae32955e497c64721c84",
+    "vendor/lib64/libtime_genoff.so": "2c4c87173dfaadbc9eb6423113e6c6f98252cb259e9082f42621bcadc03dfd71",
+    "vendor/lib64/vendor.qti.hardware.display.config-V7-ndk.so": "1343c8c860cf95a00f28c7305a92e96c9274360a14f87ee817de12d388aac2fa"
+  }
+}

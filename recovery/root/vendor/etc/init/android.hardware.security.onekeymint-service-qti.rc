@@ -2,10 +2,11 @@
 # All rights reserved.
 # Confidential and Proprietary - Qualcomm Technologies, Inc. 
 
-on init
+on property:vendor.sys.listeners.registered=true
     start vendor.keymint
 
 service vendor.keymint /vendor/bin/hw/android.hardware.security.onekeymint-service-qti
     class early_hal
     user system
     group system drmrpc
+    seclabel u:r:recovery:s0

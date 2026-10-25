@@ -60,6 +60,16 @@ on fs
 
 on boot
     setprop sys.usb.config adb
+    start nx809j-touch
+
+# vendor_boot supplies modules matching the running kernel. The Synaptics
+# platform device may remain unbound after its SPI transport appears.
+service nx809j-touch /system/bin/sh /system/bin/init.nx809j-touch.sh
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
 
 # qseecomd is up, so the HALs that reach a trustlet through it can follow.
 # 服务名取自真机:
