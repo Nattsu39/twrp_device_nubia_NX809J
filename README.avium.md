@@ -4,6 +4,8 @@ This branch targets the installed Avium Android 16 firmware: system security
 patch 2026-09-01, vendor security patch 2026-03-01, and the compatible
 6.12.38-android16-OP-WILD kernel in boot. It does not replace that kernel.
 
+The deployed image and device results are recorded in [VALIDATION.md](VALIDATION.md).
+
 ## Changes
 
 * Load the matching `spi-msm-geni` module from vendor_boot and bind the Synaptics
