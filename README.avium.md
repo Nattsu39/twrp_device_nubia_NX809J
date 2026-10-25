@@ -13,6 +13,11 @@ patch 2026-09-01, vendor security patch 2026-03-01, and the compatible
   `/devices/platform/soc/*` prefix also selected internal UFS partitions.
 * Remove Xiaomi-only partition entries and fix slot selection for firmware image
   backups. USB storage remains configured; physical OTG testing is separate.
+* Define raw boot/firmware backups directly in recovery.fstab. The shipped
+  twrp.flags parser incorrectly overrides v2 block paths with filesystem names,
+  leaving Boot and Recovery at zero bytes. Keep the flags overlay empty and use
+  supported v1 rows for these entries. Treat the unformatted VM persist volume
+  as an optional raw backup rather than an ext4 filesystem to auto-mount.
 * Give crypto services an explicit recovery SELinux domain and start KeyMint
   after the Qualcomm listeners are ready. Include the listeners loaded with
   `dlopen`, which the original DT_NEEDED-only extraction missed.
